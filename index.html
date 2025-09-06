@@ -1,0 +1,298 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Smart Farm</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://www.unpkg.com/@eohjsc/era-widget@1.1.3/src/index.js"></script>
+  <style>
+    body, html {
+      height: 100%;
+      width: 100%;
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background: #f5f7fa;
+    }
+    .card {
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+    }
+    .sensor-value {
+      transition: all 0.3s ease;
+    }
+    .sensor-value.updated {
+      color: #2563eb;
+      font-weight: 600;
+    }
+    @keyframes pulse-opacity {
+      0%, 100% { opacity: 1 }
+      50% { opacity: 0.5 }
+    }
+    .loading {
+      animation: pulse-opacity 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+  </style>
+</head>
+<body class="h-screen w-screen flex justify-center items-start p-4">
+  <div class="w-full max-w-3xl space-y-4">
+    <!-- Header -->
+    <div class="card py-6 px-8 text-center">
+      <h1 class="text-indigo-600 font-bold text-lg uppercase tracking-wider">SMART FARM</h1>
+      <p class="text-gray-500 text-sm mt-1">Điều khiển và giám sát vườn rau thông minh</p>
+    </div>
+
+    <!-- Control Panel -->
+    <div class="card p-6">
+      <div class="flex items-center space-x-3 mb-6">
+        <div class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg">
+          <i class="fa-solid fa-sliders text-white"></i>
+        </div>
+        <h2 class="text-blue-600 font-bold text-lg tracking-tight">ĐIỀU KHIỂN</h2>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        <!-- Irrigation Control -->
+        <div class="bg-emerald-50 rounded-xl p-4 border border-emerald-200">
+          <h3 class="text-emerald-600 font-semibold mb-3 flex items-center space-x-2">
+            <i class="fa-solid fa-droplet"></i><span>Tưới cây</span>
+          </h3>
+          <div class="grid grid-cols-2 gap-3">
+            <button onclick="controlButton(0, true, event)"
+              class="flex items-center justify-center space-x-2 w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl py-3 text-sm transition-all duration-300 active:scale-95 shadow">
+              <i class="fa-solid fa-play text-xs"></i><span>CHẠY</span>
+            </button>
+            <button onclick="controlButton(0, false, event)"
+              class="flex items-center justify-center space-x-2 w-full bg-rose-600 hover:bg-rose-500 text-white font-semibold rounded-xl py-3 text-sm transition-all duration-300 active:scale-95 shadow">
+              <i class="fa-solid fa-stop text-xs"></i><span>DỪNG</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Canopy Control -->
+        <div class="bg-amber-50 rounded-xl p-4 border border-amber-200">
+          <h3 class="text-amber-600 font-semibold mb-3 flex items-center space-x-2">
+            <i class="fa-solid fa-umbrella"></i><span>Điều khiển bạt</span>
+          </h3>
+          <div class="grid grid-cols-2 gap-3">
+            <button onclick="controlButton(1, true, event)"
+              class="flex items-center justify-center space-x-2 w-full bg-amber-600 hover:bg-amber-500 text-white font-semibold rounded-xl py-3 text-sm transition-all duration-300 active:scale-95 shadow">
+              <i class="fa-solid fa-door-open text-xs"></i><span>MỞ</span>
+            </button>
+            <button onclick="controlButton(1, false, event)"
+              class="flex items-center justify-center space-x-2 w-full bg-gray-600 hover:bg-gray-500 text-white font-semibold rounded-xl py-3 text-sm transition-all duration-300 active:scale-95 shadow">
+              <i class="fa-solid fa-door-closed text-xs"></i><span>ĐÓNG</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Auto Mode -->
+      <div class="bg-blue-50 rounded-xl p-4 border border-blue-200">
+        <h3 class="text-blue-600 font-semibold mb-3 flex items-center space-x-2">
+          <i class="fa-solid fa-robot"></i><span>Chế độ tự động</span>
+        </h3>
+        <button onclick="controlButton(2, true, event)"
+          class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl py-3 text-sm transition-all duration-300 active:scale-95 shadow flex items-center justify-center space-x-2">
+          <i class="fa-solid fa-circle-play text-xs"></i><span>KÍCH HOẠT AUTO</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Monitoring Section -->
+    <div class="card p-6 space-y-4">
+      <div class="flex justify-between items-center text-indigo-600 font-semibold text-base">
+        <div class="flex items-center space-x-2">
+          <i class="fas fa-chart-line"></i>
+          <span>GIÁM SÁT</span>
+        </div>
+        <div class="flex items-center space-x-1">
+          <i id="mode-icon" class="fas fa-cog text-gray-500"></i>
+          <span id="sensor-6">--</span>
+        </div>
+      </div>
+
+      <div class="space-y-4 text-gray-700 text-base">
+        <div class="flex justify-between items-center p-4 rounded-lg bg-gray-50">
+          <div class="flex items-center space-x-2">
+            <i class="fas fa-thermometer-half text-red-500"></i>
+            <span>NHIỆT ĐỘ THỰC:</span>
+          </div>
+          <span id="sensor-0" class="sensor-value font-mono">-- °C</span>
+        </div>
+
+        <div class="flex justify-between items-center p-4 rounded-lg bg-gray-50">
+          <div class="flex items-center space-x-2">
+            <i class="fas fa-tint text-blue-500"></i>
+            <span>ĐỘ ẨM THỰC:</span>
+          </div>
+          <span id="sensor-1" class="sensor-value font-mono">-- %</span>
+        </div>
+
+        <div class="flex justify-between items-center p-4 rounded-lg bg-gray-50">
+          <div class="flex items-center space-x-2">
+            <i class="fas fa-water text-teal-500"></i>
+            <span>ĐỘ ẨM ĐẤT:</span>
+          </div>
+          <span id="sensor-2" class="sensor-value font-mono">-- %</span>
+        </div>
+
+        <div class="flex justify-between items-center p-4 rounded-lg bg-gray-50">
+          <div class="flex items-center space-x-2">
+            <i class="fas fa-seedling text-green-600"></i>
+            <span>TÌNH TRẠNG PHÁT TRIỂN:</span>
+          </div>
+          <span id="sensor-3" class="sensor-value font-mono">-- cm</span>
+        </div>
+
+        <div class="flex justify-between items-center p-4 rounded-lg bg-gray-50">
+          <div class="flex items-center space-x-2">
+            <i id="cover-icon" class="fas fa-umbrella text-orange-500"></i>
+            <span>CHE BẠT:</span>
+          </div>
+          <span id="sensor-4" class="font-mono text-gray-700">--</span>
+        </div>
+
+        <div class="flex justify-between items-center p-4 rounded-lg bg-gray-50">
+          <div class="flex items-center space-x-2">
+            <i id="water-icon" class="fas fa-tint text-teal-600"></i>
+            <span>TƯỚI CÂY:</span>
+          </div>
+          <span id="sensor-5" class="font-mono text-gray-700">--</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- Fix trùng kết nối ---
+    if (window.eraWidgetInstance) {
+      window.eraWidgetInstance.disconnect?.();
+    }
+    const eraWidget = new EraWidget();
+    window.eraWidgetInstance = eraWidget;
+
+    let actionConfigs = new Array(6).fill(null);
+    let isConfigured = false;
+    let realtimeConfigs = new Array(7).fill(null);
+
+    const units = ["°C", "%", "%", "cm"];
+
+    function updateSensorDisplay(index, value) {
+      const element = document.getElementById(`sensor-${index}`);
+      if (!element) return;
+
+      if (index <= 3) {
+        element.textContent = value + " " + units[index];
+      } else if (index === 4) {
+        element.textContent = value === 1 ? "ĐANG MỞ" : "ĐANG ĐÓNG";
+        document.getElementById("cover-icon").className =
+          value === 1 ? "fas fa-umbrella text-green-500" : "fas fa-umbrella text-orange-500";
+      } else if (index === 5) {
+        element.textContent = value === 1 ? "ĐANG TƯỚI" : "NGỪNG TƯỚI";
+        document.getElementById("water-icon").className =
+          value === 1 ? "fas fa-tint text-blue-600" : "fas fa-tint text-gray-400";
+      } else if (index === 6) {
+        element.textContent = value === 1 ? "TỰ ĐỘNG" : "THỦ CÔNG";
+        document.getElementById("mode-icon").className =
+          value === 1 ? "fas fa-cog text-green-600" : "fas fa-cog text-yellow-500";
+      }
+
+      element.classList.add('updated');
+      setTimeout(() => element.classList.remove('updated'), 300);
+    }
+
+    function setManualMode() {
+      updateSensorDisplay(6, 0); // 0 = THỦ CÔNG
+    }
+
+    function controlButton(buttonIndex, isOn, event) {
+      if (!isConfigured) {
+        showErrorToast('Vui lòng đợi kết nối...');
+        return;
+      }
+      const actionIndex = (buttonIndex * 2) + (isOn ? 0 : 1);
+      const btn = event.currentTarget;
+
+      if (buttonIndex === 0) {
+        updateSensorDisplay(5, isOn ? 1 : 0);
+        setManualMode();
+        showInfoToast(isOn ? "Đang tưới (Thủ công)" : "Ngừng tưới (Thủ công)");
+      } else if (buttonIndex === 1) {
+        updateSensorDisplay(4, isOn ? 1 : 0);
+        setManualMode();
+        showInfoToast(isOn ? "Đang mở bạt (Thủ công)" : "Đang đóng bạt (Thủ công)");
+      } else if (buttonIndex === 2 && isOn) {
+        updateSensorDisplay(6, 1);
+        showInfoToast("Đã chuyển sang chế độ TỰ ĐỘNG");
+      }
+
+      if (actionConfigs[actionIndex]) {
+        btn.classList.add('loading');
+        btn.disabled = true;
+
+        eraWidget.triggerAction(actionConfigs[actionIndex].action, null, { value: isOn ? 1 : 0 })
+          .then(() => {
+            console.log('Đã gửi lệnh:', actionConfigs[actionIndex].action);
+          })
+          .catch(error => {
+            console.error('Lỗi điều khiển:', error);
+            showErrorToast('Lỗi kết nối thiết bị');
+          })
+          .finally(() => {
+            btn.classList.remove('loading');
+            btn.disabled = false;
+          });
+      }
+    }
+
+    function showErrorToast(message) {
+      showToast(message, "bg-rose-600");
+    }
+
+    function showInfoToast(message) {
+      showToast(message, "bg-blue-600");
+    }
+
+    function showToast(message, color) {
+      const toast = document.createElement('div');
+      toast.className = `fixed bottom-4 right-4 ${color} text-white px-4 py-2 rounded-lg shadow-lg`;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    eraWidget.init({
+      onConfiguration: (config) => {
+        if (config.actions) {
+          config.actions.forEach((action, index) => {
+            if(index < actionConfigs.length) actionConfigs[index] = action;
+          });
+        }
+        if (config.realtime_configs) {
+          realtimeConfigs = config.realtime_configs.slice(0,7);
+        }
+        if (!isConfigured) {
+          document.querySelectorAll('button').forEach(btn => btn.disabled = false);
+        }
+        isConfigured = true;
+      },
+      onValues: (values) => {
+        realtimeConfigs.forEach((config, index) => {
+          if (config?.id && values[config.id]) {
+            updateSensorDisplay(index, values[config.id].value);
+          }
+        });
+      },
+      onError: (error) => {
+        console.error('E-Ra Error:', error);
+        showErrorToast('Mất kết nối, đang thử lại...');
+        // Không disable nút vĩnh viễn nữa
+      }
+    });
+  </script>
+</body>
+</html>
